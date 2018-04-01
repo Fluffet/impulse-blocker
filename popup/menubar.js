@@ -54,6 +54,7 @@ function displayCurrentDomain() {
 function refreshToolbar() {
   markExtensionStatus();
   displayCurrentDomain();
+  getActiveProfile();
 }
 
 function addWebsite() {
@@ -77,6 +78,12 @@ function openOptions() {
     url: '/options/options.html',
   });
   window.close();
+}
+
+function getActiveProfile() {
+  getBackgroundPage.then((bg) => {
+    document.getElementById("active-profile").innerHTML = bg.getProfile();
+  });
 }
 
 radioOff.addEventListener('click', handleClick);

@@ -3,6 +3,10 @@ body {
     min-width: 200px;
 }
 
+#active-profile {
+    color: darkgray;
+}
+
 .wrapper {
     width: 90%;
     margin: 0 auto;
@@ -28,6 +32,10 @@ form {
     margin: 1em 0;
 }
 
+.profile-section {
+    margin: 1em 0;
+}
+
 .button {
     diplay: block;
     width: 100%;
@@ -49,4 +57,8 @@ form {
 .options {
     height: 1em;
     float: right;
+}
+
+.center-text {
+    text-align: center;
 }

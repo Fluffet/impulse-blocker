@@ -1,12 +1,15 @@
 const ImpulseBlocker = {
   extStatus: 'on',
+  profile: 'default',
 
   /**
    * Starts the blocker. Adds a listener so that if new websites is added
    * to the blocked list the listener is refreshed.
    */
   init: () => {
-    const handlingStorage = browser.storage.local.get('sites').then((storage) => {
+
+
+    const handlingStorage = browser.storage.local.get( ImpulseBlocker.getProfileStorageURI() ).then((storage) => {
       if (typeof storage.sites === 'undefined') {
         return browser.storage.local.set({
           sites: [],
@@ -30,6 +33,16 @@ const ImpulseBlocker = {
    * Returns the current status of the extension.
    */
   getStatus: () => ImpulseBlocker.extStatus,
+
+  /**
+   * Returns the currently activate profile
+   */
+  getProfile: () => ImpulseBlocker.profile,
+
+  /**
+   * Returns storage URI string of current profile
+   */
+  getProfileStorageURI: () => ImpulseBlocker.getProfile() + "-storage",
 
   /**
    * Sets the current status of the extension.
@@ -121,6 +134,11 @@ function getStatus() {
   return ImpulseBlocker.getStatus();
 }
 
+function getProfile() {
+  return ImpulseBlocker.getProfile();
+}
+
+
 function disableBlocker() {
   ImpulseBlocker.disableBlocker();
 }
@@ -137,6 +155,7 @@ function getSites() {
   return browser.storage.local.get('sites');
 }
 
+
 function addCurrentlyActiveSite() {
   const gettingActiveTab = browser.tabs.query({ active: true, currentWindow: true });
   return gettingActiveTab.then((tabs) => {
@@ -152,3 +171,5 @@ function removeCurrentlyActiveSite() {
     ImpulseBlocker.removeSite(url.hostname.replace(/^www\./, ''));
   });
 }
+
+console.log("veva!")
