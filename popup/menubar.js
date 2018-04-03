@@ -82,7 +82,7 @@ function openOptions() {
 
 function getActiveProfile() {
   getBackgroundPage.then((bg) => {
-    document.getElementById("active-profile").innerHTML = bg.getProfile();
+    document.querySelector("#active-profile").innerHTML = bg.getProfile();
   });
 }
 

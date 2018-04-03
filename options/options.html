@@ -31,19 +31,42 @@
             display: table-cell;
             margin: 0.25em 0.5em;
         }
+
+        .profile-management-container{
+            margin-bottom: 10px;
+        }
+
+        .profile-management-container form select {
+            min-width: 10em;
+        }
+
     </style>
 </head>
 <body>
+    <div class="profile-management-container">
+        <form>
+            <label for="selected-active-profile">Settings for: </label>
+            <select id="selected-active-profile" name="selected-active-profile">
+                <option value="default">default</option>
+            </select>
+
+            <button type="button" id="create-new-profile-button">Create a new profile</button>
+            <button type="button" id="delete-current-profile-button">Delete current profile</button>
+        </form>
+    </div>
+
     <form>
         <label for="site">Website to block:</label>
         <input type="text" id="site" name="site">
         <input type="submit" value="Add">
     </form>
+
     <div class="blocked-sites">
         <p class="list-header">Currently blocked websites:</p>
         <ul>
         </ul>
     </div>
+
     <script src="options.js"></script>
 </body>
 </html>

@@ -1,6 +1,10 @@
 const blockedSites = document.querySelector('.blocked-sites ul');
-const form = document.querySelector('form');
-const getSites = browser.storage.local.get('sites');
+const siteForm = document.querySelector('#site');
+const addProfileButton = document.querySelector('#create-new-profile-button');
+const deleteProfileButton = document.querySelector('#delete-current-profile-button');
+
+const getSites = browser.storage.local.get('default-sites');
+const getProfiles = browser.storage.local.get('profiles')
 
 function addToBlockedList(text) {
   const label = document.createElement('p');
@@ -35,10 +39,10 @@ function restoreOptions() {
 
 function saveSite(event) {
   event.preventDefault();
-  const url = form.site.value;
+  const url = siteForm.site.value;
   if (url.length == 0) { return; }
   addToBlockedList(url);
-  form.site.value = '';
+  siteForm.site.value = '';
 
   getSites.then((storage) => {
     storage.sites.push(url);
@@ -67,6 +71,44 @@ function deleteSite(event) {
   }
 }
 
-form.addEventListener('submit', saveSite);
+function loadProfiles () {
+
+}
+
+function createProfile(event) {
+  console.log("CreateProfile");
+  var name = window.prompt("Name:","");
+
+  getProfiles.then((storage) => {
+    storage.profiles.push(url);
+    browser.storage.local.set({
+      profiles: profiles.sites,
+    });
+  });
+
+}
+
+function getCurrentProfile () {
+
+}
+
+function deleteProfile(event) {
+  console.log("DeleteProfile");
+
+  var activeProvile = document.querySelector("#selected-active-profile").value;
+
+  var decision = confirm("This will delete the profile: " + activeProvile);
+
+  if ( decision ) {
+    // Code for profile deletion
+  }
+
+}
+
+siteForm.addEventListener('submit', saveSite);
 blockedSites.addEventListener('click', deleteSite);
+
+addProfileButton.addEventListener('click', createProfile);
+deleteProfileButton.addEventListener('click', deleteProfile)
+
 document.addEventListener('DOMContentLoaded', restoreOptions);
