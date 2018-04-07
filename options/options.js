@@ -3,8 +3,8 @@ const siteForm = document.querySelector('#site');
 const addProfileButton = document.querySelector('#create-new-profile-button');
 const deleteProfileButton = document.querySelector('#delete-current-profile-button');
 
-const getSites = browser.storage.local.get('default-sites');
-const getProfiles = browser.storage.local.get('profiles')
+const getSites = browser.storage.local.get('sites');
+const getProfiles = browser.storage.local.get('profile_data')
 
 function addToBlockedList(text) {
   const label = document.createElement('p');
@@ -35,6 +35,8 @@ function restoreOptions() {
       addToBlockedList(site);
     });
   });
+
+  reloadProfiles()
 }
 
 function saveSite(event) {
@@ -71,38 +73,67 @@ function deleteSite(event) {
   }
 }
 
-function loadProfiles () {
 
+function reloadProfiles() {
+  getProfiles.then((storage) => {
+    var activeProfileDiv = document.querySelector("#selected-active-profile");
+
+    activeProfileDiv.innerHTML = "";
+
+    storage.profile_data["stored_profiles"].forEach((profile) => {
+      // Append profiles
+      const el = document.createElement('option');
+      el.value = profile;
+      el.innerHTML = profile;
+      activeProfileDiv.append(el);
+    })
+  })
 }
 
 function createProfile(event) {
-  console.log("CreateProfile");
   var name = window.prompt("Name:","");
 
   getProfiles.then((storage) => {
-    storage.profiles.push(url);
-    browser.storage.local.set({
-      profiles: profiles.sites,
-    });
+    var profile_data = storage.profile_data;
+    profile_data.stored_profiles.push(name);
+    return browser.storage.local.set({profile_data});
   });
 
+  restoreOptions();
 }
 
-function getCurrentProfile () {
+function getCurrentProfile() {
+  getProfiles.then((storage) => {
+    return storage.profile_data[current_profile];
+  });
+}
 
+function setProfile(profile_name) {
+  getProfiles.then((storage) => {
+    var profile_data = storage.profile_data;
+    profile_data.current_profile = profile_name;
+    return browser.storage.local.set({profile_data});
+  });
+
+  restoreOptions();
 }
 
 function deleteProfile(event) {
-  console.log("DeleteProfile");
-
-  var activeProvile = document.querySelector("#selected-active-profile").value;
-
-  var decision = confirm("This will delete the profile: " + activeProvile);
+  var activeProfile = document.querySelector("#selected-active-profile").value;
+  var decision = confirm("This will delete the profile: " + activeProfile);
 
   if ( decision ) {
-    // Code for profile deletion
+    getProfiles.then((storage) => {
+      var profile_data = storage.profile_data;
+      const i = profile_data.stored_profiles.indexOf(activeProfile);
+      if (i !== -1) {
+        profile_data.stored_profiles.splice(i, 1);
+      }
+      return browser.storage.local.set({profile_data});
+    });
   }
 
+  restoreOptions();
 }
 
 siteForm.addEventListener('submit', saveSite);
