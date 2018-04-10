@@ -1,7 +1,8 @@
 const blockedSites = document.querySelector('.blocked-sites ul');
-const siteForm = document.querySelector('#site');
+const siteForm = document.querySelector('#siteForm');
 const addProfileButton = document.querySelector('#create-new-profile-button');
 const deleteProfileButton = document.querySelector('#delete-current-profile-button');
+const selectedActiveProfileField = document.querySelector('#selected-active-profile')
 
 const getSites = browser.storage.local.get('sites');
 const getProfiles = browser.storage.local.get('profile_data')
@@ -30,28 +31,39 @@ function hasNoExtension(url) {
 }
 
 function restoreOptions() {
-  getSites.then((storage) => {
-    storage.sites.forEach((site) => {
-      addToBlockedList(site);
-    });
-  });
+  blockedSites.innerHTML = '';
 
-  reloadProfiles()
+  getSites.then( (storage) => {
+      var sites = storage.sites
+      getProfiles.then( (profile_storage) => {
+        const cp = profile_storage.profile_data["current_profile"]
+        sites[cp].forEach( (site) => {
+          addToBlockedList(site);
+        })
+    }).then( () => {
+      reloadProfiles()
+    })
+  })
 }
 
 function saveSite(event) {
   event.preventDefault();
+
   const url = siteForm.site.value;
   if (url.length == 0) { return; }
   addToBlockedList(url);
   siteForm.site.value = '';
 
-  getSites.then((storage) => {
-    storage.sites.push(url);
-    browser.storage.local.set({
-      sites: storage.sites,
-    });
-  });
+  getSites.then( (storage) => {
+    var sites = storage.sites
+    const current_profile = getCurrentProfile()
+    current_profile.then( (cp) => {
+      sites[cp].push(url)
+      return browser.storage.local.set({sites})
+    })
+
+  })
+
 }
 
 function deleteSite(event) {
@@ -61,32 +73,38 @@ function deleteSite(event) {
     const toDeleteText = event.target.previousSibling.textContent;
     toDeleteParent.removeChild(toDelete);
 
-    getSites.then((storage) => {
-      const i = storage.sites.indexOf(toDeleteText);
-      if (i !== -1) {
-        storage.sites.splice(i, 1);
-      }
-      browser.storage.local.set({
-        sites: storage.sites,
-      });
-    });
-  }
-}
 
+    getSites.then((storage) => {
+      var sites = storage.sites
+      const current_profile = getCurrentProfile()
+      current_profile.then( (cp) => {
+        const i = sites[cp].indexOf(toDeleteText);
+
+        if (i !== -1) {
+          sites[cp].splice(i, 1);
+        }
+
+        browser.storage.local.set({sites});
+      });
+    })
+
+  }
+ }
 
 function reloadProfiles() {
   getProfiles.then((storage) => {
     var activeProfileDiv = document.querySelector("#selected-active-profile");
+    activeProfileDiv.innerHTML = "";  // Clear old profile list
 
-    activeProfileDiv.innerHTML = "";
-
+    // Update new profile list
     storage.profile_data["stored_profiles"].forEach((profile) => {
-      // Append profiles
       const el = document.createElement('option');
       el.value = profile;
       el.innerHTML = profile;
       activeProfileDiv.append(el);
     })
+
+    activeProfileDiv.value = storage.profile_data["current_profile"]
   })
 }
 
@@ -96,26 +114,15 @@ function createProfile(event) {
   getProfiles.then((storage) => {
     var profile_data = storage.profile_data;
     profile_data.stored_profiles.push(name);
+
+    getSites.then((storage) => {
+      var sites = storage.sites
+      sites[name] = []
+      return browser.storage.local.set({sites})
+    })
     return browser.storage.local.set({profile_data});
-  });
+  }).then( () => { restoreOptions() })
 
-  restoreOptions();
-}
-
-function getCurrentProfile() {
-  getProfiles.then((storage) => {
-    return storage.profile_data[current_profile];
-  });
-}
-
-function setProfile(profile_name) {
-  getProfiles.then((storage) => {
-    var profile_data = storage.profile_data;
-    profile_data.current_profile = profile_name;
-    return browser.storage.local.set({profile_data});
-  });
-
-  restoreOptions();
 }
 
 function deleteProfile(event) {
@@ -130,10 +137,42 @@ function deleteProfile(event) {
         profile_data.stored_profiles.splice(i, 1);
       }
       return browser.storage.local.set({profile_data});
-    });
+    }).then( () => { restoreOptions() });
   }
 
-  restoreOptions();
+
+}
+
+async function getCurrentProfile() {
+  const current_profile = await getProfiles.then((storage) => {
+    return storage.profile_data["current_profile"]
+  });
+
+  return current_profile
+}
+
+async function getSitesForCurrentProfile () {
+  var current_profile = await getProfiles.then( (profile_storage) => {
+    var profile_data = profile_storage.profile_data
+    return profile_data["current_profile"] })
+
+  var sites = await getSites.then((site_storage) => {
+    var sites = site_storage.sites
+    return sites
+    })
+
+  return sites[current_profile]
+}
+
+function setProfile(event) {
+  const activeProfile = selectedActiveProfileField.value;
+
+  getProfiles.then((storage) => {
+    var profile_data = storage.profile_data;
+    profile_data.current_profile = activeProfile;
+    return browser.storage.local.set({profile_data});
+  }).then( () => { restoreOptions() })
+
 }
 
 siteForm.addEventListener('submit', saveSite);
@@ -141,5 +180,7 @@ blockedSites.addEventListener('click', deleteSite);
 
 addProfileButton.addEventListener('click', createProfile);
 deleteProfileButton.addEventListener('click', deleteProfile)
+
+selectedActiveProfileField.addEventListener('change', setProfile)
 
 document.addEventListener('DOMContentLoaded', restoreOptions);

@@ -7,13 +7,22 @@ const ImpulseBlocker = {
    * to the blocked list the listener is refreshed.
    */
   init: () => {
+    browser.storage.local.get('profile_data').then((storage) => {
 
+      if (typeof storage.profile_data === 'undefined'){
+        // First time running plugin
+        profile_data = {};
+        profile_data["current_profile"] = 'default';
+        profile_data["stored_profiles"] = ["default"];
+        return browser.storage.local.set({profile_data});
+      }
+    });
 
-    const handlingStorage = browser.storage.local.get( ImpulseBlocker.getProfileStorageURI() ).then((storage) => {
+    const handlingStorage = browser.storage.local.get('sites').then((storage) => {
       if (typeof storage.sites === 'undefined') {
-        return browser.storage.local.set({
-          sites: [],
-        });
+        var sites = {}
+        sites["default"] = []
+        return browser.storage.local.set({sites});
       }
     });
 
@@ -35,14 +44,20 @@ const ImpulseBlocker = {
   getStatus: () => ImpulseBlocker.extStatus,
 
   /**
-   * Returns the currently activate profile
+   * Returns the currently activated profile
    */
   getProfile: () => ImpulseBlocker.profile,
 
-  /**
-   * Returns storage URI string of current profile
-   */
-  getProfileStorageURI: () => ImpulseBlocker.getProfile() + "-storage",
+  setProfile: (profile_name) => {
+    browser.storage.local.get('profile_data').then((storage) => {
+        profile_data = storage.profile_data;
+        profile_data["current_profile"] = profile_name;
+        ImpulseBlocker.profile = profile_name;
+        return browser.storage.local.set({profile_data});
+      }
+    )
+  },
+
 
   /**
    * Sets the current status of the extension.
@@ -61,12 +76,13 @@ const ImpulseBlocker = {
   },
 
   /**
+   * Fetches profile and then:
    * Fetches blocked websites lists, attaches them to the listener provided
    * by the WebExtensions API.
    */
   setBlocker: () => {
     browser.storage.local.get('sites').then((storage) => {
-      const pattern = storage.sites.map(item => `*://*.${item}/*`);
+      const pattern = storage.sites[getProfile()].map(item => `*://*.${item}/*`);
 
       browser.webRequest.onBeforeRequest.removeListener(ImpulseBlocker.redirect);
       if (pattern.length > 0) {
@@ -172,4 +188,4 @@ function removeCurrentlyActiveSite() {
   });
 }
 
-console.log("veva!")
+console.log("veva! bögballle")
